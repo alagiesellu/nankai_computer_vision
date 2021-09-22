@@ -3,4 +3,4 @@ project(nankai_computer_vision)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(nankai_computer_vision main.cpp)
+add_executable(nankai_computer_vision main.cpp image-procressing/Image.cpp image-procressing/Image.h)
