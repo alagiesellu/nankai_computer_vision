@@ -15,6 +15,7 @@ class Image {
 
 private:
     string filePath;
+    int*** pixels;
 
 public:
     Image(string filePath) {
@@ -22,8 +23,6 @@ public:
     }
 
     int*** getPixel() {
-
-        int*** pixels;
 
     }
 
