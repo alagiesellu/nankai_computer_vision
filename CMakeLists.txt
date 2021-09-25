@@ -3,4 +3,4 @@ project(nankai_computer_vision)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(nankai_computer_vision main.cpp libs/stb_image.h)
+add_executable(nankai_computer_vision main.cpp libs/stb_image.h libs/stb_image_write.h)
