@@ -18,20 +18,15 @@ int SEAM_COUNTER = 0;
 int SEAM_ENERGY = 0;
 
 
-
-
 // Loads as RGBA... even if file is only RGB
 // Feel free to adjust this if you so please, by changing the 4 to a 0.
 bool write_image(uint8_t* image, char const *filename, int& x, int&y)
 {
-    int n;
     stbi_write_jpg(
             filename,
             x, y, COLOR_PROPERTY, image, 100
             );
 }
-
-
 
 // Loads as RGBA... even if file is only RGB
 // Feel free to adjust this if you so please, by changing the 4 to a 0.
@@ -40,8 +35,7 @@ bool load_image(std::vector<unsigned char>& image, const std::string& filename, 
     int n;
     unsigned char* data = stbi_load(filename.c_str(), &x, &y, &n, req_comp);
 
-    if (data != nullptr)
-    {
+    if (data != nullptr) {
         image = vector<unsigned char>(data, data + x * y * req_comp);
     }
 
@@ -65,22 +59,18 @@ int calculate_energy(vector<vector<vector<unsigned int>>>& pixels, int x, int y,
     SEAM_COUNTER = 0;
     SEAM_ENERGY = 0;
 
-    if (y > 0)
-        SEAM_ENERGY += calculator(pixels[y][x], pixels[y - 1][x]);
+    if (y > 0) SEAM_ENERGY += calculator(pixels[y][x], pixels[y - 1][x]);
 
-    if (y < height - 1)
-        SEAM_ENERGY += calculator(pixels[y][x], pixels[y + 1][x]);
+    if (y < height - 1) SEAM_ENERGY += calculator(pixels[y][x], pixels[y + 1][x]);
 
-    if (x > 0)
-        SEAM_ENERGY += calculator(pixels[y][x - 1], pixels[y][x]);
+    if (x > 0) SEAM_ENERGY += calculator(pixels[y][x - 1], pixels[y][x]);
 
-    if (x < width - 1)
-        SEAM_ENERGY += calculator(pixels[y][x], pixels[y][x + 1]);
+    if (x < width - 1) SEAM_ENERGY += calculator(pixels[y][x], pixels[y][x + 1]);
 
     return SEAM_ENERGY / SEAM_COUNTER;
 }
 
-int seam_carve(const std::string& filename,  char const *carved_filename)
+int seam_carve_width(const std::string& filename,  char const *carved_filename)
 {
     int width, height;
 
@@ -111,10 +101,6 @@ int seam_carve(const std::string& filename,  char const *carved_filename)
         }
     }
 
-//    cout << "Width: " << pixels.size() << endl;
-//    cout << "Height: " << pixels[0].size() << endl;
-//    cout << "Pixels: " << pixels[0][0].size() << endl;
-
     vector<vector<unsigned int>> pixels_energy(
             height, vector<unsigned int>(width)
     );
@@ -138,6 +124,7 @@ int seam_carve(const std::string& filename,  char const *carved_filename)
     int best_weight = 0;
 
     while (start_width < width - height) {
+
         int temp_best_weight = 0;
 
         for (int x = start_width; x < height; x++)
@@ -174,7 +161,7 @@ int main()
     int pictures = 6;
 
     for (int i = 0; i <= pictures; i++)
-        seam_carve(
+        seam_carve_width(
                 "/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + ".jpg",
                 ("/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + "_cropped.jpg").c_str()
                 );
