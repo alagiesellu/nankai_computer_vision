@@ -111,9 +111,9 @@ int seam_carve(const std::string& filename,  char const *carved_filename)
         }
     }
 
-    cout << "Width: " << pixels.size() << endl;
-    cout << "Height: " << pixels[0].size() << endl;
-    cout << "Pixels: " << pixels[0][0].size() << endl;
+//    cout << "Width: " << pixels.size() << endl;
+//    cout << "Height: " << pixels[0].size() << endl;
+//    cout << "Pixels: " << pixels[0][0].size() << endl;
 
     vector<vector<unsigned int>> pixels_energy(
             height, vector<unsigned int>(width)
@@ -171,7 +171,9 @@ int seam_carve(const std::string& filename,  char const *carved_filename)
 int main()
 {
 
-    for (int i = 0; i <= 3; i++)
+    int pictures = 6;
+
+    for (int i = 0; i <= pictures; i++)
         seam_carve(
                 "/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + ".jpg",
                 ("/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + "_cropped.jpg").c_str()
