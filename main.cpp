@@ -176,7 +176,7 @@ int seam_crop_width(const int i)
 
 int main()
 {
-    int pictures = 6;
+    const int pictures = 6;
     for (int i = 0; i <= pictures; i++)
         seam_crop_width(i);
     return 0;
