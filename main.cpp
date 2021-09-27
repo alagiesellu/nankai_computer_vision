@@ -20,11 +20,11 @@ int SEAM_ENERGY = 0;
 
 // Loads as RGBA... even if file is only RGB
 // Feel free to adjust this if you so please, by changing the 4 to a 0.
-bool write_image(uint8_t* image, char const *filename, int& x, int&y)
+bool write_image(uint8_t* image, char const *filename, int& x, int&y, const int& req_comp)
 {
     stbi_write_jpg(
             filename,
-            x, y, COLOR_PROPERTY, image, 100
+            x, y, req_comp, image, 100
             );
 }
 
@@ -70,13 +70,18 @@ int calculate_energy(vector<vector<vector<unsigned int>>>& pixels, int x, int y,
     return SEAM_ENERGY / SEAM_COUNTER;
 }
 
-int seam_carve_width(const std::string& filename,  char const *carved_filename)
+string generate_filename(const int i, const std::string& type)
+{
+    return "/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + type + ".jpg";
+}
+
+int seam_crop_width(const int i)
 {
     int width, height;
 
     vector<unsigned char> image;
 
-    bool success = load_image(image, filename, width, height, COLOR_PROPERTY);
+    bool success = load_image(image, generate_filename(i, ""), width, height, COLOR_PROPERTY);
 
     if (!success)
     {
@@ -108,8 +113,22 @@ int seam_carve_width(const std::string& filename,  char const *carved_filename)
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             pixels_energy[y][x] = calculate_energy(pixels, x, y, width, height);
+//            cout << pixels_energy[y][x] << " ";
+        }
+//        cout << endl;
+    }
+
+    uint8_t* output_image = new uint8_t[width * height];
+
+    int output_counter = 0;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            output_image[output_counter++] = pixels_energy[y][x];
         }
     }
+
+    write_image(output_image, generate_filename(i, "energy").data(), width, height, 1);
 
     vector<int> accumulative_energy(width);
 
@@ -137,9 +156,9 @@ int seam_carve_width(const std::string& filename,  char const *carved_filename)
         start_width++;
     }
 
-    uint8_t* output_image = new uint8_t[width * height * COLOR_PROPERTY];
+    output_image = new uint8_t[width * height * COLOR_PROPERTY];
 
-    int output_counter = 0;
+    output_counter = 0;
 
     for (int y = 0; y < height; y++) {
         for (int x = best_index; x < best_index + height; x++) {
@@ -149,7 +168,7 @@ int seam_carve_width(const std::string& filename,  char const *carved_filename)
         }
     }
 
-    write_image(output_image, carved_filename, height, height);
+    write_image(output_image, generate_filename(i, "cropped").data(), height, height, COLOR_PROPERTY);
 
     return 0;
 }
@@ -157,14 +176,8 @@ int seam_carve_width(const std::string& filename,  char const *carved_filename)
 
 int main()
 {
-
     int pictures = 6;
-
     for (int i = 0; i <= pictures; i++)
-        seam_carve_width(
-                "/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + ".jpg",
-                ("/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + to_string(i) + "_cropped.jpg").c_str()
-                );
-
+        seam_crop_width(i);
     return 0;
 }
