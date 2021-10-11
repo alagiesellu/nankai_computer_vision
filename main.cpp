@@ -13,275 +13,336 @@ extern "C" {
 
 using namespace std;
 
-const int COLOR_PROPERTY = 3;
-int SEAM_COUNTER = 0;
-int SEAM_ENERGY = 0;
+#define UNDEFINED_VALUE -1
+#define COLOR_PROPERTY 3
 
-int width, height, lowest, lowest_index, next_h;
+int WIDTH, HEIGHT;
 
-// Loads as RGBA... even if file is only RGB
-// Feel free to adjust this if you so please, by changing the 4 to a 0.
-bool
-write_image(uint8_t* image, char const *filename, int& x, int&y, const int& req_comp)
-{
-    stbi_write_jpg(
-            filename,
-            x, y, req_comp, image, 100
-            );
+void
+load_pixels(vector<int>& pixels, vector<uint8_t>& image) {
+
+    pixels = vector<int>(image.size());
+
+    for (int i = 0; i < image.size(); i++) {
+        pixels[i] = static_cast<int>(image[i]);
+    }
 }
 
 // Loads as RGBA... even if file is only RGB
 // Feel free to adjust this if you so please, by changing the 4 to a 0.
-bool
-load_image(std::vector<unsigned char>& image, const std::string& filename, int& x, int&y, const int& req_comp)
+void
+write_image(uint8_t* image, char const *filename, int& width, int& height, const int& req_comp)
+{
+    stbi_write_jpg(
+            filename,
+            width, height, req_comp, image, 100
+    );
+}
+
+// Loads as RGBA... even if file is only RGB
+// Feel free to adjust this if you so please, by changing the 4 to a 0.
+void
+load_image(vector<int>& image_pixels, const string& filename, int& width, int& height, const int& req_comp)
 {
     int n;
-    unsigned char* data = stbi_load(filename.c_str(), &x, &y, &n, req_comp);
+    uint8_t* data = stbi_load(filename.c_str(), &width, &height, &n, req_comp);
+    vector<uint8_t> image_input;
 
     if (data != nullptr) {
-        image = vector<unsigned char>(data, data + x * y * req_comp);
+        image_input = vector<uint8_t>(data, data + width * height * req_comp);
     }
 
     stbi_image_free(data);
 
-    return (data != nullptr);
+    if (data == nullptr)
+    {
+        cout << "Error loading image." << endl;
+    }
+
+    load_pixels(image_pixels, image_input);
 }
 
-int
-calculator(vector<unsigned int> pixel, vector<unsigned int> neighboring_pixel) {
+void
+output_image_from_energy(vector<int>& energy_map, uint8_t*& output_pixels) {
 
-    int energy = 0;
+    output_pixels = new uint8_t[energy_map.size()];
 
-    for (int i = 0; i < COLOR_PROPERTY; i++, SEAM_COUNTER++)
-        energy += abs((int)(pixel[i] - neighboring_pixel[i]));
-
-    return energy;
-}
-
-vector<int>
-calculate_energy(vector<vector<vector<unsigned int>>>& pixels, int x, int y) {
-
-    vector<int> exit = vector<int>(2);
-    SEAM_COUNTER = 0;
-    SEAM_ENERGY = 0;
-
-    if (y > 0) SEAM_ENERGY += calculator(pixels[y][x], pixels[y - 1][x]);
-
-    if (y < height - 1) SEAM_ENERGY += calculator(pixels[y][x], pixels[y + 1][x]);
-
-    if (x > 0) SEAM_ENERGY += calculator(pixels[y][x - 1], pixels[y][x]);
-
-    if (x < width - 1) SEAM_ENERGY += calculator(pixels[y][x], pixels[y][x + 1]);
-
-    exit[0] = SEAM_ENERGY / SEAM_COUNTER;
-    exit[1] = -1;
-
-    return exit;
+    for (int i = 0; i < energy_map.size(); i++) {
+        output_pixels[i] = energy_map[i];
+    }
 }
 
 string
-generate_filename(const int i, const std::string& type)
-{
+generate_filename(int i, const string& type) {
+
     string name = to_string(i);
 
-    if (type.length() > 0)
+    if (! type.empty())
         name = type + "/" + name;
 
     return "/home/ilak/Documents/GitHub/nankai-computer-vision/assets/" + name + ".jpg";
 }
 
-int
-find_path(
-        vector<vector<vector<unsigned int>>>& pixels,
-        vector<vector<vector<int>>>& energy_and_memory_yx,
-        int w,
-        int h
+int calculate_index(int row, int col, int color, int depth) {
+    return (row * WIDTH * depth) + (col * depth) + color;
+}
+
+int calculate_multi_dimension_index(int row, int col, int color) {
+    return calculate_index(row, col, color, COLOR_PROPERTY);
+}
+
+int calculate_uni_dimension_index(int row, int col) {
+    return calculate_index(row, col,0, 1);
+}
+
+int calculate_energy(vector<int>& image_pixels, int& row1, int& col1, int row2, int col2) {
+    int energy = 0;
+
+    for (int i = 0; i < COLOR_PROPERTY; i++) {
+        energy += abs(
+                (int)(
+                        image_pixels[calculate_multi_dimension_index(row1, col1, i)]
+                        -
+                        image_pixels[calculate_multi_dimension_index(row2, col2, i)]
+                        )
+                );
+    }
+
+    return (energy / COLOR_PROPERTY);
+}
+
+int calculate_energy_of_pixel(vector<int>& input_pixels, int row, int col) {
+
+    int energy = 0;
+
+    if (row > 0) {
+        energy += calculate_energy(input_pixels, row, col, row-1, col);
+    }
+
+    if (row < HEIGHT - 1) {
+        energy += calculate_energy(input_pixels, row, col, row+1, col);
+    }
+
+    if (col > 0) {
+        energy += calculate_energy(input_pixels, row, col, row, col-1);
+    }
+
+    if (col < WIDTH - 1) {
+        energy += calculate_energy(input_pixels, row, col, row, col+1);
+    }
+
+    return energy;
+}
+
+void calculate_energy_map(vector<int>& input_pixels, vector<int>& energy_map) {
+
+    energy_map = vector<int>(WIDTH * HEIGHT);
+
+    for (int row = 0; row < HEIGHT; row++) {
+        for (int col = 0; col < WIDTH; col++) {
+            energy_map[calculate_uni_dimension_index(row, col)] = calculate_energy_of_pixel(input_pixels, row, col);
+        }
+    }
+}
+
+void
+get_three_column_positions(
+        vector<int>& three_neighbors,
+        vector<int>& input_pixels,
+        int row,
+        int col
         ) {
 
-    next_h = h + 1;
+    int col_pos = col;
 
-    if (next_h >= height)
+    for (int i = 0; i < 2; i++) {
+
+        while (
+                col_pos >= 0
+                &&
+                input_pixels[calculate_multi_dimension_index(row, col_pos, 0)] == UNDEFINED_VALUE
+                )
+            col_pos--;
+
+        three_neighbors[i] = static_cast<int>(col_pos);
+        col_pos--;
+    }
+
+    col_pos = three_neighbors[0] + 1;
+
+    while (
+            col_pos < WIDTH
+            &&
+            input_pixels[calculate_multi_dimension_index(row, col_pos, 0)] == UNDEFINED_VALUE
+            )
+        col_pos++;
+
+    three_neighbors[2] = static_cast<int>(col_pos);
+}
+
+int
+find_path(
+        vector<int>& input_pixels,
+        vector<int>& energy_map,
+        vector<vector<int>>& next_step_column,
+        int row,
+        int col
+) {
+
+    if (input_pixels[calculate_multi_dimension_index(row, col, 0)] == UNDEFINED_VALUE)
+        return -1;
+
+    int next_row = row + 1;
+    int lowest_col, lowest_energy;
+
+    if (next_row >= HEIGHT)
         return 0;
 
-    if (energy_and_memory_yx[h][w][1] == -1)
+    if (! next_step_column[row][col])
     {
-        lowest_index = w;
-        lowest = static_cast<int>(energy_and_memory_yx[next_h][lowest_index][0]);
+        vector<int> three_neighbors = vector<int>(3);
+        get_three_column_positions(three_neighbors, input_pixels, row, col);
 
-        if (w > 0 && energy_and_memory_yx[next_h][w - 1][0] < lowest) {
-            lowest_index = w - 1;
-            lowest = static_cast<int>(energy_and_memory_yx[next_h][lowest_index][0]);
+        lowest_col = three_neighbors[0];
+        lowest_energy = energy_map[calculate_uni_dimension_index(row, lowest_col)];
+
+        if (three_neighbors[1] != UNDEFINED_VALUE && energy_map[calculate_uni_dimension_index(row, three_neighbors[1])] < lowest_energy) {
+            lowest_col = three_neighbors[1];
+            lowest_energy = static_cast<int>(energy_map[calculate_uni_dimension_index(row, lowest_col)]);
         }
 
-        if (w + 1 < width && energy_and_memory_yx[next_h][w + 1][0] < lowest)
-            lowest_index = w + 1;
+        if (three_neighbors[2] != UNDEFINED_VALUE && energy_map[calculate_uni_dimension_index(row, three_neighbors[2])] < lowest_energy)
+            lowest_col = three_neighbors[2];
 
-        energy_and_memory_yx[h][w][1] = lowest_index;
+        next_step_column[row][col] = lowest_col;
     }
 
     return
-            calculator(pixels[h][w], pixels[next_h][energy_and_memory_yx[h][w][1]])
+            calculate_energy(input_pixels, row, col, next_row, next_step_column[row][col])
             +
-            find_path(pixels, energy_and_memory_yx, energy_and_memory_yx[h][w][1], next_h);
+            find_path(input_pixels, energy_map, next_step_column, next_row, next_step_column[row][col]);
+}
+
+
+void
+eliminate(vector<int>& input_pixels, vector<vector<int>>& next_step_column, int col) {
+
+    for (int row = 0; row < HEIGHT; row++) {
+        for (int i = 0; i < COLOR_PROPERTY; ++i) {
+            input_pixels[calculate_multi_dimension_index(row, col, i)] = UNDEFINED_VALUE;
+        }
+        col = next_step_column[row][col];
+    }
 }
 
 void
 eliminate_column(
-        vector<vector<vector<unsigned int>>>& pixels,
-        vector<vector<vector<int>>>& energy_and_memory_yx,
-        int w
+        vector<int>& input_pixels,
+        vector<int>& energy_map,
+        vector<vector<int>>& next_step_column,
+        vector<int>& columns_weight
         ) {
-    for (int h = 0; h < height; h++) {
-        pixels[h][w][0] = pixels[h][w][1] = pixels[h][w][2] = -1;
-        w = static_cast<int>(energy_and_memory_yx[h][w][1]);
-    }
-}
+    int lowest_column = 0, path_weight;
+    int lowest_column_weight = find_path(input_pixels, energy_map, next_step_column, 0, lowest_column);
 
-void
-output_image_from_energy(vector<vector<vector<int>>>& energy_and_memory, uint8_t*& output_image) {
-
-    output_image = new uint8_t[width * height];
-
-    int output_counter = 0;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            output_image[output_counter++] = energy_and_memory[y][x][0];
+    for (int col = 1; col < WIDTH; col++) {
+        path_weight = find_path(input_pixels, energy_map, next_step_column, 0, col);
+        if (
+                lowest_column_weight == UNDEFINED_VALUE
+                ||
+                (path_weight != UNDEFINED_VALUE && path_weight < lowest_column_weight)
+        ) {
+            lowest_column = col;
+            lowest_column_weight = path_weight;
         }
     }
+
+    eliminate(input_pixels, next_step_column, lowest_column);
 }
 
 void
-output_image_from_carved(vector<vector<vector<unsigned int>>>& pixels, uint8_t*& output_image) {
-
-    output_image = new uint8_t[height * width * COLOR_PROPERTY];
-
-    int output_counter = 0;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            for (int px = 0; px < COLOR_PROPERTY; px++) {
-                if (pixels[y][x][px] != -1)
-                    output_image[output_counter++] = static_cast<int>(pixels[y][x][px]);
-            }
-        }
-    }
-}
-
-void
-calculate_energy_and_memory(vector<vector<vector<unsigned int>>>& pixels, vector<vector<vector<int>>>& energy_and_memory) {
-
-    energy_and_memory = vector<vector<vector<int>>>(
-            height,
-            vector<vector<int>>(
-                    width, vector<int>(2)
-            )
-    );
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            energy_and_memory[y][x] = calculate_energy(pixels, x, y);
-        }
-    }
-}
-
-void
-load_pixels(vector<vector<vector<unsigned int>>>& pixels, vector<unsigned char>& image) {
-
-    pixels = vector<vector<vector<unsigned int>>>(
-            height,
-            vector<vector<unsigned int>>(
-                    width, vector<unsigned int>(COLOR_PROPERTY)
-            )
-    );
-
-    int index = 0;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            for (int px = 0; px < COLOR_PROPERTY; px++) {
-                pixels[y][x][px] = static_cast<int>(image[index++]);
-            }
-        }
-    }
-}
-
-void
-seam_carve(
-        vector<vector<vector<unsigned int>>>& pixels,
-        vector<vector<vector<int>>>& energy_and_memory
-        )
+seam_carve(vector<int>& input_pixels, vector<int>& energy_map, int to_eliminate)
 {
-    vector<unsigned int> columns_sum(width);
+    vector<vector<int>> next_step_column = vector<vector<int>>(HEIGHT,vector<int>(WIDTH));
+    vector<int> columns_weight = vector<int>(WIDTH);
 
-//    cout << width << " - " << height << endl;
-    for (int w = 0; w < width; ++w) {
-        columns_sum[w] = find_path(pixels, energy_and_memory, w, 0);
-//        cout << w << ":" << columns_sum[w] << endl;
-    }
+    cout << "To Eliminate:" << to_eliminate << endl;
 
-    int cheapest_index, cheapest_column_weight;
-    int columns_to_eliminate = width - height;
     int eliminated_columns = 0;
-
-//    cout << eliminated_columns << " < " << columns_to_eliminate << endl;
-    while (eliminated_columns < columns_to_eliminate)
-    {
-        cheapest_column_weight = -1;
-        cheapest_index = 0;
-
-        for (int w = 0; w < width; ++w) {
-            if (pixels[0][w][0] != -1) {
-                if (cheapest_column_weight == - 1) {
-                    cheapest_index = w;
-                    cheapest_column_weight = static_cast<int>(columns_sum[cheapest_index]);
-                } else if (
-                        pixels[0][cheapest_index][0] != -1
-                        &&
-                        columns_sum[w] < cheapest_column_weight
-                        ) {
-                    cheapest_index = w;
-                    cheapest_column_weight = static_cast<int>(columns_sum[cheapest_index]);
-                }
-            }
-        }
-        eliminate_column(pixels,energy_and_memory, cheapest_index);
+    while (eliminated_columns < to_eliminate) {
+        eliminate_column(input_pixels, energy_map, next_step_column, columns_weight);
+//        cout << eliminated_columns << " - ";
         eliminated_columns++;
     }
+    next_step_column.clear();
+//    cout << "Eliminated:" << eliminated_columns << endl;
+}
+
+void
+output_image_from_pixels(vector<int>& input_pixels, uint8_t*& output_pixels, int width, int height) {
+
+    output_pixels = new uint8_t[width * height * COLOR_PROPERTY];
+
+    cout << "Length: " << (width * height * COLOR_PROPERTY) << endl;
+
+    int pixel_counter = 0;
+
+    for (int i = 0; i < input_pixels.size(); i++) {
+//        cout << input_pixels[i] << " ";
+        if (input_pixels[i] != UNDEFINED_VALUE) {
+            pixel_counter++;
+//            output_pixels[pixel_counter++] = static_cast<int>(input_pixels[i]);
+        }
+    }
+    cout << "Length: " << (pixel_counter) << endl;
 }
 
 int
-seam_crop_width(const int i)
+seam_carve_width(const int i)
 {
+    vector<int> input_pixels;
+    vector<int> energy_map;
+    uint8_t* output_pixels;
 
-    vector<unsigned char> image;
+    load_image(input_pixels, generate_filename(i, ""), WIDTH, HEIGHT, COLOR_PROPERTY);
+    cout << "WIDTH:" << WIDTH << " HEIGHT:" << HEIGHT << endl;
 
-    bool success = load_image(image, generate_filename(i, ""), width, height, COLOR_PROPERTY);
+    calculate_energy_map(input_pixels, energy_map);
 
-    if (!success)
-    {
-        cout << "Error loading image." << endl;
-        return 1;
+    output_image_from_energy(energy_map, output_pixels);
+
+    write_image(output_pixels, generate_filename(i, "energy").data(), WIDTH, HEIGHT, 1);
+
+    int to_eliminate = (WIDTH - HEIGHT);
+    int new_width = WIDTH - to_eliminate;
+
+    seam_carve(input_pixels, energy_map, to_eliminate);
+
+    energy_map.clear();
+
+    output_image_from_pixels(input_pixels, output_pixels, new_width, HEIGHT);
+
+    input_pixels.clear();
+
+    write_image(
+            output_pixels,
+            generate_filename(i, "carved").data(),
+            HEIGHT,
+            HEIGHT,
+            COLOR_PROPERTY
+            );
+
+    return 0;
+}
+
+int
+test_code() {
+    vector<int> energy_map = vector<int>(10);
+
+    for (int i : energy_map) {
+        if (i)
+            cout << i;
     }
-
-    vector<vector<vector<unsigned int>>> pixels;
-
-    load_pixels(pixels, image);
-
-
-    vector<vector<vector<int>>> energy_and_memory;
-    uint8_t* output_image;
-
-    calculate_energy_and_memory(pixels, energy_and_memory);
-
-    output_image_from_energy(energy_and_memory, output_image);
-
-    write_image(output_image, generate_filename(i, "energy").data(), width, height, 1);
-
-    seam_carve(pixels, energy_and_memory);
-
-    output_image_from_carved(pixels, output_image);
-
-    write_image(output_image, generate_filename(i, "cropped").data(), height, height, COLOR_PROPERTY);
 
     return 0;
 }
@@ -289,8 +350,12 @@ seam_crop_width(const int i)
 int
 main()
 {
-    const int pictures = 6;
-    for (int i = 0; i <= pictures; i++)
-        seam_crop_width(i);
+//    return test_code();
+
+    const int pictures = 1;
+    for (int i = 0; i < pictures; i++) {
+        seam_carve_width(i);
+    }
+
     return 0;
 }

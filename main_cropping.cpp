@@ -166,7 +166,7 @@ int seam_crop_width(const int i)
         }
     }
 
-    write_image(output_image, generate_filename(i, "cropped").data(), height, height, COLOR_PROPERTY);
+    write_image(output_image, generate_filename(i, "carved").data(), height, height, COLOR_PROPERTY);
 
     return 0;
 }
