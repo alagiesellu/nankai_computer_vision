@@ -13,7 +13,7 @@ extern "C" {
 
 using namespace std;
 
-#define UNDEFINED_VALUE -1
+#define UNDEFINED_VALUE (-1)
 #define COLOR_PROPERTY 3
 
 int WIDTH, HEIGHT;
@@ -115,21 +115,17 @@ int calculate_energy_of_pixel(vector<int>& input_pixels, int row, int col) {
 
     int energy = 0;
 
-    if (row > 0) {
-        energy += calculate_energy(input_pixels, row, col, row-1, col);
-    }
+    if (row > 0)
+        energy += calculate_energy(input_pixels, row, col, (row - 1), col);
 
-    if (row < HEIGHT - 1) {
-        energy += calculate_energy(input_pixels, row, col, row+1, col);
-    }
+    if (row < (HEIGHT - 1))
+        energy += calculate_energy(input_pixels, row, col, (row + 1), col);
 
-    if (col > 0) {
-        energy += calculate_energy(input_pixels, row, col, row, col-1);
-    }
+    if (col > 0)
+        energy += calculate_energy(input_pixels, row, col, row, (col - 1));
 
-    if (col < WIDTH - 1) {
-        energy += calculate_energy(input_pixels, row, col, row, col+1);
-    }
+    if (col < (WIDTH - 1))
+        energy += calculate_energy(input_pixels, row, col, row, (col + 1));
 
     return energy;
 }
@@ -189,8 +185,8 @@ find_path(
         int col
 ) {
 
-    if (input_pixels[calculate_multi_dimension_index(row, col, 0)] == UNDEFINED_VALUE)
-        return -1;
+//    if (input_pixels[calculate_multi_dimension_index(row, col, 0)] == UNDEFINED_VALUE)
+//        return -1;
 
     int next_row = row + 1;
     int lowest_col, lowest_energy;
@@ -198,7 +194,7 @@ find_path(
     if (next_row >= HEIGHT)
         return 0;
 
-    if (! next_step_column[row][col])
+    if (next_step_column[row][col] == UNDEFINED_VALUE)
     {
         vector<int> three_neighbors = vector<int>(3);
         get_three_column_positions(three_neighbors, input_pixels, row, col);
@@ -225,12 +221,20 @@ find_path(
 
 
 void
-eliminate(vector<int>& input_pixels, vector<vector<int>>& next_step_column, int col) {
+eliminate(vector<int>& input_pixels, vector<int>& energy_map, vector<vector<int>>& next_step_column, int col) {
 
+    int index_to_remove;
     for (int row = 0; row < HEIGHT; row++) {
-        for (int i = 0; i < COLOR_PROPERTY; ++i) {
-            input_pixels[calculate_multi_dimension_index(row, col, i)] = UNDEFINED_VALUE;
-        }
+        index_to_remove = input_pixels[calculate_multi_dimension_index(row, col, 0) - (row * COLOR_PROPERTY)];
+
+        input_pixels.erase(
+                input_pixels.begin() + index_to_remove,
+                input_pixels.begin() + index_to_remove + 3
+                );
+        energy_map.erase(
+                energy_map.begin() + index_to_remove
+                );
+
         col = next_step_column[row][col];
     }
 }
@@ -240,40 +244,41 @@ eliminate_column(
         vector<int>& input_pixels,
         vector<int>& energy_map,
         vector<vector<int>>& next_step_column,
-        vector<int>& columns_weight
+        int width
         ) {
     int lowest_column = 0, path_weight;
     int lowest_column_weight = find_path(input_pixels, energy_map, next_step_column, 0, lowest_column);
 
-    for (int col = 1; col < WIDTH; col++) {
+    for (int col = 1; col < width; col++) {
         path_weight = find_path(input_pixels, energy_map, next_step_column, 0, col);
         if (
-                lowest_column_weight == UNDEFINED_VALUE
+                input_pixels[calculate_multi_dimension_index(0, lowest_column, 0)] == UNDEFINED_VALUE
                 ||
-                (path_weight != UNDEFINED_VALUE && path_weight < lowest_column_weight)
+                (path_weight < lowest_column_weight)
         ) {
             lowest_column = col;
             lowest_column_weight = path_weight;
         }
     }
 
-    eliminate(input_pixels, next_step_column, lowest_column);
+    cout << "lowest_column: " << lowest_column << endl;
+
+    eliminate(input_pixels, energy_map, next_step_column, lowest_column);
 }
 
 void
 seam_carve(vector<int>& input_pixels, vector<int>& energy_map, int to_eliminate)
 {
-    vector<vector<int>> next_step_column = vector<vector<int>>(HEIGHT,vector<int>(WIDTH));
-    vector<int> columns_weight = vector<int>(WIDTH);
+    vector<vector<int>> next_step_column = vector<vector<int>>(HEIGHT,vector<int>(WIDTH, UNDEFINED_VALUE));
 
     cout << "To Eliminate:" << to_eliminate << endl;
 
-    int eliminated_columns = 0;
-    while (eliminated_columns < to_eliminate) {
-        eliminate_column(input_pixels, energy_map, next_step_column, columns_weight);
-//        cout << eliminated_columns << " - ";
-        eliminated_columns++;
+    int width = static_cast<int>(WIDTH);
+
+    for (int i = 0; i < to_eliminate; ++i) {
+        eliminate_column(input_pixels, energy_map, next_step_column, width--);
     }
+
     next_step_column.clear();
 //    cout << "Eliminated:" << eliminated_columns << endl;
 }
@@ -290,8 +295,9 @@ output_image_from_pixels(vector<int>& input_pixels, uint8_t*& output_pixels, int
     for (int i = 0; i < input_pixels.size(); i++) {
 //        cout << input_pixels[i] << " ";
         if (input_pixels[i] != UNDEFINED_VALUE) {
-            pixel_counter++;
-//            output_pixels[pixel_counter++] = static_cast<int>(input_pixels[i]);
+            output_pixels[pixel_counter++] = static_cast<int>(input_pixels[i]);
+        } else {
+            i += 2;
         }
     }
     cout << "Length: " << (pixel_counter) << endl;
