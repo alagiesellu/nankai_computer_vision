@@ -44,14 +44,8 @@ bool load_image(std::vector<unsigned char>& image, const std::string& filename, 
     return (data != nullptr);
 }
 
-int calculator(vector<int> pixel, vector<int> neighboring_pixel) {
-
-    int energy = 0;
-
-    for (int i = 0; i < COLOR_PROPERTY; i++)
-        energy += abs((int)(pixel[i] - neighboring_pixel[i]));
-
-    return energy;
+int calculator(vector<int> &pixel, vector<int> &neighboring_pixel) {
+    return abs((int)(pixel[0] - neighboring_pixel[0])) + abs((int)(pixel[1] - neighboring_pixel[1])) + abs((int)(pixel[2] - neighboring_pixel[2]));
 }
 
 int calculate_energy(vector<vector<vector<int>>>& pixels, int col, int row) {
@@ -60,11 +54,11 @@ int calculate_energy(vector<vector<vector<int>>>& pixels, int col, int row) {
 
     if (row > 0) energy += calculator(pixels[row][col], pixels[row - 1][col]);
 
-    if (row < HEIGHT - 1) energy += calculator(pixels[row][col], pixels[row + 1][col]);
+    if (row + 1 < HEIGHT) energy += calculator(pixels[row][col], pixels[row + 1][col]);
 
-    if (col > 0) energy += calculator(pixels[row][col - 1], pixels[row][col]);
+    if (col > 0) energy += calculator(pixels[row][col], pixels[row][col - 1]);
 
-    if (col < WIDTH - 1) energy += calculator(pixels[row][col], pixels[row][col + 1]);
+    if (col + 1 < WIDTH) energy += calculator(pixels[row][col], pixels[row][col + 1]);
 
     return energy;
 }
@@ -80,10 +74,12 @@ string generate_filename(const int i, const string& type)
     return "/home/leber/CLionProjects/nankai_computer_vision/assets/" + name + ".jpg";
 }
 
-int get_cheapest_col(vector<vector<int>> &pixels_energy, int col, int next_row) {
+int get_cheapest_next_col(vector<vector<int>> &pixels_energy, int col, int row) {
 
-    int cheapest_col = col;
-    int cheapest_energy = static_cast<int>(pixels_energy[next_row][col]);
+    int next_row = row + 1;
+
+    int cheapest_col = static_cast<int>(col);
+    int cheapest_energy = static_cast<int>(pixels_energy[next_row][cheapest_col]);
 
     if (col > 0 && pixels_energy[next_row][col - 1] < cheapest_energy) {
         cheapest_col = col - 1;
@@ -93,72 +89,112 @@ int get_cheapest_col(vector<vector<int>> &pixels_energy, int col, int next_row) 
     if (col + 1 < WIDTH && pixels_energy[next_row][col + 1] < cheapest_energy)
         cheapest_col = col + 1;
 
+//    cout << "C:" << col << " - R:" << row << " = " << cheapest_col << endl;
+
     return cheapest_col;
 }
 
 int
 calculate_path_energy(
-        vector<vector<vector<int>>>& pixels, vector<vector<int>>& pixels_energy, vector<vector<int>>& next_step_memory,
+        vector<vector<vector<int>>>& pixels, vector<vector<int>>& pixels_energy,
+        vector<vector<int>>& next_step_memory, vector<vector<int>>& path_energy_memory,
         int col, int row
         ) {
 
-    if (row + 1 >= HEIGHT)
-        return pixels_energy[row][col];
-
     int next_row = row + 1;
 
-    if (next_step_memory[row][col] == NULL_INT_VALUE) {
-        next_step_memory[row][col] = get_cheapest_col(pixels_energy, col, next_row);
-    }
-
-    return
-            pixels_energy[row][col]
-            +
-            calculate_path_energy(pixels, pixels_energy, next_step_memory, next_step_memory[row][col], next_row);
-}
-
-void remove_pixel(vector<vector<vector<int>>> &pixels, vector<vector<int>> &pixels_energy, vector<vector<int>> &next_step_memory,
-                  int remove_col, int &col, int row) {
-
-    remove_col = static_cast<int>(col);
+    if (next_row == HEIGHT)
+        return pixels_energy[row][col];
 
     if (next_step_memory[row][col] == NULL_INT_VALUE) {
-        next_step_memory[row][col] = get_cheapest_col(pixels_energy, col, row + 1);
+        next_step_memory[row][col] = get_cheapest_next_col(pixels_energy, col, row);
     }
 
-    col = next_step_memory[row][col];
+    if (path_energy_memory[row][col] == NULL_INT_VALUE) {
+        path_energy_memory[row][col] =
+                pixels_energy[row][col]
+                +
+                calculate_path_energy(pixels, pixels_energy, next_step_memory, path_energy_memory, next_step_memory[row][col], next_row);
+    }
 
-    pixels[row][remove_col].clear();
-//    pixels[row].erase (pixels[row].begin() + remove_col);
-    pixels_energy[row].clear();//.erase (pixels_energy[row].begin() + remove_col);
-    next_step_memory[row].clear();//.erase (next_step_memory[row].begin() + remove_col);
-
-    pixels_energy[row][col] = calculate_energy(pixels, col, row);
+    return path_energy_memory[row][col];
 }
 
-void eliminate_path(vector<vector<vector<int>>> &pixels, vector<vector<int>> &pixels_energy, vector<vector<int>> &next_step_memory,
-                    int col) {
-    int remove_col;
-    for (int row = 0; row < HEIGHT - 1; row++) {
-        remove_pixel(pixels, pixels_energy, next_step_memory, remove_col, col, row);
-        next_step_memory[row][col] = get_cheapest_col(pixels_energy, col, row + 1);
-    }
-    remove_pixel(pixels, pixels_energy, next_step_memory, remove_col, col, HEIGHT - 1);
+void remove_2d_element(vector<vector<int>> &list, int col, int row) {
+    list[row].erase(list[row].begin() + col);
+}
 
+void remove_3d_element(vector<vector<vector<int>>> &list, int col, int row) {
+    list[row].erase(list[row].begin() + col);
+}
+
+void remove_pixel(
+        vector<vector<vector<int>>> &pixels, vector<vector<int>> &pixels_energy, vector<vector<int>> &next_step_memory,
+         int &cheapest_col, int row
+        ) {
+
+    int remove_col = static_cast<int>(cheapest_col);
+
+    cheapest_col = next_step_memory[row][remove_col];
+
+    remove_3d_element(pixels, remove_col, row);
+
+    remove_2d_element(pixels_energy, remove_col, row);
+    remove_2d_element(next_step_memory, remove_col, row);
+
+//    pixels_energy[row][remove_col] = calculate_energy(pixels, remove_col, row);
+//
+//    int next_remove_col = remove_col - 1;
+//    if (next_remove_col > 0)
+//        pixels_energy[row][next_remove_col] = calculate_energy(pixels, next_remove_col, row);
+//
+//    int next_row = row - 1;
+//    if (next_row > 0)
+//        pixels_energy[next_row][remove_col] = calculate_energy(pixels, remove_col, next_row);
+
+}
+
+void eliminate_path(
+        vector<vector<vector<int>>> &pixels,
+        vector<vector<int>> &pixels_energy,
+        vector<vector<int>> &next_step_memory,
+        int cheapest_col
+        ) {
+
+    for (int row = 0; row < HEIGHT; row++) {
+        remove_pixel(
+                pixels,
+                pixels_energy,
+                next_step_memory,
+                cheapest_col,
+                row
+                );
+//        cout << "E: ";
+//        next_step_memory[row][cheapest_col] = get_cheapest_next_col(pixels_energy, cheapest_col, row);
+    }
 }
 
 void carve_image(vector<vector<vector<int>>>& pixels, vector<vector<int>>& pixels_energy) {
 
-    vector<vector<int>> next_step_memory(
-            HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
-    );
+    vector<vector<int>> next_step_memory;
+    vector<vector<int>> path_energy_memory;
+
+    int path_energy, cheapest_col, cheapest_path_energy;
 
     while (WIDTH > HEIGHT) {
 
-        int path_energy, cheapest_col = 0, cheapest_path_energy = calculate_path_energy(pixels, pixels_energy, next_step_memory, 0, 0);
+        next_step_memory = vector<vector<int>>(
+                HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
+        );
+
+        path_energy_memory = vector<vector<int>>(
+                HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
+        );
+
+        cheapest_col = 0, cheapest_path_energy = calculate_path_energy(pixels, pixels_energy, next_step_memory, path_energy_memory, 0, 0);
 
         for (int col = 1; col < WIDTH; col++) {
-            path_energy = calculate_path_energy(pixels, pixels_energy, next_step_memory, col, 0);
+            path_energy = calculate_path_energy(pixels, pixels_energy, next_step_memory, path_energy_memory, col, 0);
 
             if (path_energy < cheapest_path_energy) {
                 cheapest_path_energy = path_energy;
@@ -166,8 +202,12 @@ void carve_image(vector<vector<vector<int>>>& pixels, vector<vector<int>>& pixel
             }
         }
 
-        eliminate_path(pixels, pixels_energy, next_step_memory, cheapest_col);
-
+        eliminate_path(
+                pixels,
+                pixels_energy,
+                next_step_memory,
+                cheapest_col
+                );
         WIDTH--;
     }
 }
@@ -229,16 +269,88 @@ int seam_crop_width(const int i)
 
     output_image = new uint8_t[WIDTH * HEIGHT * COLOR_PROPERTY];
 
+    output_counter = 0;
+
+    for (int row = 0; row < HEIGHT; row++) {
+        for (int col = 0; col < WIDTH; col++) {
+            for (int px = 0; px < COLOR_PROPERTY; px++) {
+                output_image[output_counter++] = pixels[row][col][px];
+            }
+        }
+    }
+
     write_image(output_image, generate_filename(i, "carved").data(), WIDTH, HEIGHT, COLOR_PROPERTY);
 
     return 0;
 }
 
+void test2d(int num) {
+
+    vector<vector<string>> list(
+            num,
+            vector<string>(num)
+    );
+
+    for (int row = 0; row < num; row++) {
+        for (int col = 0; col < num; col++) {
+            list[row][col] = to_string(row) + to_string(col);
+        }
+    }
+
+//    remove_2d_element(list, 2, 2);
+
+    for (int row = 0; row < list.size(); row++) {
+        for (int col = 0; col < list[row].size(); col++) {
+            cout << list[row][col] << "  ";
+        }
+        cout << endl;
+    }
+}
+
+void test3d(int num) {
+
+    vector<vector<vector<string>>> list(
+            num,
+            vector<vector<string>>(
+                    num, vector<string>(COLOR_PROPERTY)
+            )
+    );
+
+    for (int row = 0; row < num; row++) {
+        for (int col = 0; col < num; col++) {
+            for (int px = 0; px < COLOR_PROPERTY; px++) {
+                list[row][col][px] = to_string(row) + to_string(col) + to_string(px);
+            }
+        }
+    }
+
+//    remove_3d_element(list, 2, 2);
+
+    for (int row = 0; row < list.size(); row++) {
+        for (int col = 0; col < list[row].size(); col++) {
+            for (int px = 0; px < COLOR_PROPERTY; px++) {
+                cout << list[row][col][px] << ",";
+            }
+            cout << "  ";
+        }
+        cout << endl;
+    }
+}
+
 
 int main()
 {
-    const int pictures = 1;
+//    int num = 6;
+//    test3d(num);
+//    cout << "------" << endl;
+//    test2d(num);
+//    return 0;
+
+    const int pictures = 7;
     for (int i = 0; i < pictures; i++)
         seam_crop_width(i);
+
+//    seam_crop_width(1);
+
     return 0;
 }
