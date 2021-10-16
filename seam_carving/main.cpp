@@ -194,6 +194,10 @@ void carve_image_width() {
     }
 }
 
+void carve_image_height() {
+    // to-do
+}
+
 void load_pixels_from_3d_to_1d() {
 
     OUTPUT_IMAGE = new uint8_t[WIDTH * HEIGHT * COLOR_PROPERTY];
@@ -270,6 +274,9 @@ void seam_carve(const int i, const string& image_extension, const string& carvin
 
     if (carving_direction == WIDTH_TYPE)
         carve_image_width();
+
+    if (carving_direction == HEIGHT_TYPE)
+        carve_image_height();
 
     load_pixels_from_3d_to_1d();
     write_image(generate_filename(i, image_extension, "carved").data(), WIDTH, HEIGHT, COLOR_PROPERTY);
