@@ -32,6 +32,7 @@ uint8_t* OUTPUT_IMAGE;
 
 vector<vector<int>> NEXT_STEP_MEMORY;
 vector<vector<int>> PATH_ENERGY_MEMORY;
+vector<int> CARVED_PATH;
 
 void write_image(char const *filename, int& col, int&row, const int& req_comp)
 {
@@ -144,16 +145,30 @@ void remove_pixel(int &cheapest_col, int row) {
     remove_2d_element(PIXELS_ENERGY, remove_col, row);
     remove_2d_element(NEXT_STEP_MEMORY, remove_col, row);
 
-//    PIXELS_ENERGY[row][remove_col] = calculate_energy(PIXELS, remove_col, row);
-//
-//    int next_remove_col = remove_col - 1;
-//    if (next_remove_col > 0)
-//        PIXELS_ENERGY[row][next_remove_col] = calculate_energy(PIXELS, next_remove_col, row);
-//
-//    int next_row = row - 1;
-//    if (next_row > 0)
-//        PIXELS_ENERGY[next_row][remove_col] = calculate_energy(PIXELS, remove_col, next_row);
+    CARVED_PATH[row] = static_cast<int>(remove_col);
 
+}
+
+void clean_carved_pixel(int col, int row) {
+    PIXELS_ENERGY[row][col] = calculate_energy(col, row);
+}
+
+void clean_carved_path() {
+
+    for (int row = 0; row < HEIGHT; row++) {
+
+        if (CARVED_PATH[row] < WIDTH) {
+            clean_carved_pixel(CARVED_PATH[row], row);
+        }
+
+        if (CARVED_PATH[row] > 0) {
+            clean_carved_pixel(CARVED_PATH[row] - 1, row);
+        }
+
+        if (CARVED_PATH[row] + 1 < WIDTH) {
+            clean_carved_pixel(CARVED_PATH[row] + 1, row);
+        }
+    }
 }
 
 void eliminate_path(int cheapest_col) {
@@ -161,19 +176,25 @@ void eliminate_path(int cheapest_col) {
     for (int row = 0; row < HEIGHT; row++) {
         remove_pixel(cheapest_col, row);
     }
+
+    WIDTH--;
+
+    clean_carved_path();
 }
 
 void carve_image_width() {
 
     int path_energy, cheapest_col, cheapest_path_energy;
 
+    CARVED_PATH = vector<int>(HEIGHT);
+
     while (WIDTH > HEIGHT) {
 
-        NEXT_STEP_MEMORY = vector<vector<int>>(
+        PATH_ENERGY_MEMORY = vector<vector<int>>(
                 HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
         );
 
-        PATH_ENERGY_MEMORY = vector<vector<int>>(
+        NEXT_STEP_MEMORY = vector<vector<int>>(
                 HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
         );
 
@@ -189,8 +210,6 @@ void carve_image_width() {
         }
 
         eliminate_path(cheapest_col);
-
-        WIDTH--;
     }
 }
 
