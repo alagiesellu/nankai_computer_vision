@@ -57,6 +57,8 @@ void load_image(const string& filename, int& col, int&row, const int& req_comp)
     {
         cout << "Error loading IMAGE." << endl;
     }
+
+    cout << WIDTH << " x " << HEIGHT << endl;
 }
 
 int calculator(vector<int> &pixel, vector<int> &neighboring_pixel) {
@@ -149,7 +151,7 @@ void remove_pixel(int &cheapest_col, int row) {
 
 }
 
-void clean_carved_pixel(int col, int row) {
+void calculate_pixel_energy(int col, int row) {
     PIXELS_ENERGY[row][col] = calculate_energy(col, row);
 }
 
@@ -158,15 +160,15 @@ void clean_carved_path() {
     for (int row = 0; row < HEIGHT; row++) {
 
         if (CARVED_PATH[row] < WIDTH) {
-            clean_carved_pixel(CARVED_PATH[row], row);
+            calculate_pixel_energy(CARVED_PATH[row], row);
         }
 
         if (CARVED_PATH[row] > 0) {
-            clean_carved_pixel(CARVED_PATH[row] - 1, row);
+            calculate_pixel_energy(CARVED_PATH[row] - 1, row);
         }
 
         if (CARVED_PATH[row] + 1 < WIDTH) {
-            clean_carved_pixel(CARVED_PATH[row] + 1, row);
+            calculate_pixel_energy(CARVED_PATH[row] + 1, row);
         }
     }
 }
@@ -253,7 +255,7 @@ void calculate_energy_map() {
 
     for (int row = 0; row < HEIGHT; row++) {
         for (int col = 0; col < WIDTH; col++) {
-            PIXELS_ENERGY[row][col] = calculate_energy(col, row);
+            calculate_pixel_energy(col, row);
         }
     }
 }
@@ -281,8 +283,6 @@ void load_pixels_from_1d_to_3d() {
 void seam_carve(const int i, const string& image_extension, const string& carving_direction = WIDTH_TYPE)
 {
     load_image(generate_filename(i, image_extension), WIDTH, HEIGHT, COLOR_PROPERTY);
-
-    cout << WIDTH << " x " << HEIGHT << endl;
 
     load_pixels_from_1d_to_3d();
 
