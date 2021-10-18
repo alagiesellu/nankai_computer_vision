@@ -145,7 +145,6 @@ void remove_pixel(int &cheapest_col, int row) {
     remove_3d_element(PIXELS, remove_col, row);
 
     remove_2d_element(PIXELS_ENERGY, remove_col, row);
-    remove_2d_element(NEXT_STEP_MEMORY, remove_col, row);
 
     CARVED_PATH[row] = static_cast<int>(remove_col);
 
@@ -305,12 +304,17 @@ int main()
 {
     seam_carve(0, JPG_EXTENSION);
     seam_carve(1, JPG_EXTENSION);
-    seam_carve(2, JPG_EXTENSION);
-    seam_carve(3, JPG_EXTENSION);
-    seam_carve(4, JPG_EXTENSION);
-    seam_carve(5, JPG_EXTENSION);
-    seam_carve(6, JPG_EXTENSION);
-    seam_carve(7, JPG_EXTENSION);
+//    seam_carve(2, JPG_EXTENSION);
+//    seam_carve(3, JPG_EXTENSION);
+//    seam_carve(4, JPG_EXTENSION);
+//    seam_carve(5, JPG_EXTENSION);
+//    seam_carve(6, JPG_EXTENSION);
+//    seam_carve(7, JPG_EXTENSION);
+//    seam_carve(8, JPG_EXTENSION);
+//    seam_carve(9, JPG_EXTENSION);
+//    seam_carve(10, JPG_EXTENSION);
+//    seam_carve(11, JPG_EXTENSION);
+//    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
