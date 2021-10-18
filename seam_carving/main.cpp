@@ -295,6 +295,7 @@ void load_pixels_from_1d_to_3d() {
 
 void seam_carve(const int i, const string& image_extension, const string& carving_direction = WIDTH_TYPE)
 {
+    cout << i << " => ";
     load_image(generate_filename(i, image_extension), WIDTH, HEIGHT, COLOR_PROPERTY);
 
     load_pixels_from_1d_to_3d();
@@ -316,21 +317,21 @@ void seam_carve(const int i, const string& image_extension, const string& carvin
 
 int main()
 {
-    WIDTH_PERCENTAGE_TO_REDUCE = 20;
+    WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
     seam_carve(0, JPG_EXTENSION);
     seam_carve(1, JPG_EXTENSION);
     seam_carve(2, JPG_EXTENSION);
-//    seam_carve(3, JPG_EXTENSION);
-//    seam_carve(4, JPG_EXTENSION);
-//    seam_carve(5, JPG_EXTENSION);
-//    seam_carve(6, JPG_EXTENSION);
-//    seam_carve(7, JPG_EXTENSION);
-//    seam_carve(8, JPG_EXTENSION);
-//    seam_carve(9, JPG_EXTENSION);
-//    seam_carve(10, JPG_EXTENSION);
-//    seam_carve(11, JPG_EXTENSION);
-//    seam_carve(12, JPG_EXTENSION);
+    seam_carve(3, JPG_EXTENSION);
+    seam_carve(4, JPG_EXTENSION);
+    seam_carve(5, JPG_EXTENSION);
+    seam_carve(6, JPG_EXTENSION);
+    seam_carve(7, JPG_EXTENSION);
+    seam_carve(8, JPG_EXTENSION);
+    seam_carve(9, JPG_EXTENSION);
+    seam_carve(10, JPG_EXTENSION);
+    seam_carve(11, JPG_EXTENSION);
+    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
