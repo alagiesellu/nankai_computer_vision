@@ -24,6 +24,7 @@ using namespace std;
 #define IMAGES_DIRECTORY_PATH "/home/leber/CLionProjects/nankai_computer_vision/assets/"
 
 int HEIGHT, WIDTH;
+double WIDTH_PERCENTAGE_TO_REDUCE = 50;
 
 vector<unsigned char> IMAGE;
 vector<vector<vector<int>>> PIXELS;
@@ -183,13 +184,26 @@ void eliminate_path(int cheapest_col) {
     clean_carved_path();
 }
 
+int calculate_next_width() {
+
+    if (WIDTH_PERCENTAGE_TO_REDUCE <= 0 || WIDTH_PERCENTAGE_TO_REDUCE >= 100) {
+        cout << "Error: Invalid width percentage to reduce." << endl;
+
+        exit(0);
+    }
+
+    return static_cast<int>(WIDTH - (WIDTH * (WIDTH_PERCENTAGE_TO_REDUCE / 100)));
+}
+
 void carve_image_width() {
+
+    int next_width = calculate_next_width();
 
     int path_energy, cheapest_col, cheapest_path_energy;
 
     CARVED_PATH = vector<int>(HEIGHT);
 
-    while (WIDTH > HEIGHT) {
+    while (WIDTH > next_width) {
 
         PATH_ENERGY_MEMORY = vector<vector<int>>(
                 HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
@@ -246,7 +260,7 @@ void load_pixels_from_2d_to_1d() {
     }
 }
 
-void calculate_energy_map() {
+void generate_energy_map() {
 
     PIXELS_ENERGY = vector<vector<int>>(
             HEIGHT, vector<int>(WIDTH)
@@ -285,7 +299,7 @@ void seam_carve(const int i, const string& image_extension, const string& carvin
 
     load_pixels_from_1d_to_3d();
 
-    calculate_energy_map();
+    generate_energy_map();
 
     load_pixels_from_2d_to_1d();
     write_image(generate_filename(i, image_extension, "energy").data(), WIDTH, HEIGHT, 1);
@@ -302,9 +316,11 @@ void seam_carve(const int i, const string& image_extension, const string& carvin
 
 int main()
 {
+    WIDTH_PERCENTAGE_TO_REDUCE = 20;
+
     seam_carve(0, JPG_EXTENSION);
     seam_carve(1, JPG_EXTENSION);
-//    seam_carve(2, JPG_EXTENSION);
+    seam_carve(2, JPG_EXTENSION);
 //    seam_carve(3, JPG_EXTENSION);
 //    seam_carve(4, JPG_EXTENSION);
 //    seam_carve(5, JPG_EXTENSION);
