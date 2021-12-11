@@ -118,13 +118,13 @@ calculate_path_energy(int col, int row) {
     if (next_row == HEIGHT)
         return PIXELS_ENERGY[row][col];
 
-    if (NEXT_STEP_MEMORY[row][col] == NULL_INT_VALUE) {
-        NEXT_STEP_MEMORY[row][col] = get_cheapest_next_col(col, row);
+    if (PATH_ENERGY_MEMORY[row][col] != NULL_INT_VALUE) {
+        return PATH_ENERGY_MEMORY[row][col];
     }
 
-    if (PATH_ENERGY_MEMORY[row][col] == NULL_INT_VALUE) {
-        PATH_ENERGY_MEMORY[row][col] = PIXELS_ENERGY[row][col] + calculate_path_energy(NEXT_STEP_MEMORY[row][col], next_row);
-    }
+    NEXT_STEP_MEMORY[row][col] = get_cheapest_next_col(col, row);
+
+    PATH_ENERGY_MEMORY[row][col] = PIXELS_ENERGY[row][col] + calculate_path_energy(NEXT_STEP_MEMORY[row][col], next_row);
 
     return PATH_ENERGY_MEMORY[row][col];
 }
@@ -321,17 +321,17 @@ int main()
 
     seam_carve(0, JPG_EXTENSION);
     seam_carve(1, JPG_EXTENSION);
-    seam_carve(2, JPG_EXTENSION);
-    seam_carve(3, JPG_EXTENSION);
-    seam_carve(4, JPG_EXTENSION);
-    seam_carve(5, JPG_EXTENSION);
-    seam_carve(6, JPG_EXTENSION);
-    seam_carve(7, JPG_EXTENSION);
-    seam_carve(8, JPG_EXTENSION);
-    seam_carve(9, JPG_EXTENSION);
-    seam_carve(10, JPG_EXTENSION);
-    seam_carve(11, JPG_EXTENSION);
-    seam_carve(12, JPG_EXTENSION);
+//    seam_carve(2, JPG_EXTENSION);
+//    seam_carve(3, JPG_EXTENSION);
+//    seam_carve(4, JPG_EXTENSION);
+//    seam_carve(5, JPG_EXTENSION);
+//    seam_carve(6, JPG_EXTENSION);
+//    seam_carve(7, JPG_EXTENSION);
+//    seam_carve(8, JPG_EXTENSION);
+//    seam_carve(9, JPG_EXTENSION);
+//    seam_carve(10, JPG_EXTENSION);
+//    seam_carve(11, JPG_EXTENSION);
+//    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
