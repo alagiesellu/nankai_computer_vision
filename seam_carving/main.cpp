@@ -321,17 +321,17 @@ int main()
 
     seam_carve(0, JPG_EXTENSION);
     seam_carve(1, JPG_EXTENSION);
-//    seam_carve(2, JPG_EXTENSION);
-//    seam_carve(3, JPG_EXTENSION);
-//    seam_carve(4, JPG_EXTENSION);
-//    seam_carve(5, JPG_EXTENSION);
-//    seam_carve(6, JPG_EXTENSION);
-//    seam_carve(7, JPG_EXTENSION);
-//    seam_carve(8, JPG_EXTENSION);
-//    seam_carve(9, JPG_EXTENSION);
-//    seam_carve(10, JPG_EXTENSION);
-//    seam_carve(11, JPG_EXTENSION);
-//    seam_carve(12, JPG_EXTENSION);
+    seam_carve(2, JPG_EXTENSION);
+    seam_carve(3, JPG_EXTENSION);
+    seam_carve(4, JPG_EXTENSION);
+    seam_carve(5, JPG_EXTENSION);
+    seam_carve(6, JPG_EXTENSION);
+    seam_carve(7, JPG_EXTENSION);
+    seam_carve(8, JPG_EXTENSION);
+    seam_carve(9, JPG_EXTENSION);
+    seam_carve(10, JPG_EXTENSION);
+    seam_carve(11, JPG_EXTENSION);
+    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
