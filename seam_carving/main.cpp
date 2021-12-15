@@ -92,9 +92,7 @@ string generate_filename(const int i, const string& extension, const string& des
     return IMAGES_DIRECTORY_PATH + name + "." + extension;
 }
 
-int get_cheapest_next_col(int col, int row) {
-
-    int next_row = row + 1;
+int get_cheapest_next_col(int col, int next_row) {
 
     int cheapest_col = static_cast<int>(col);
     int cheapest_energy = static_cast<int>(PIXELS_ENERGY[next_row][cheapest_col]);
@@ -111,7 +109,26 @@ int get_cheapest_next_col(int col, int row) {
 }
 
 int
-calculate_path_energy(int col, int row) {
+calculate_path_energy_up(int col, int row) {
+
+    if (row == 0)
+        return PIXELS_ENERGY[row][col];
+
+    if (PATH_ENERGY_MEMORY[row][col] != NULL_INT_VALUE) {
+        return PATH_ENERGY_MEMORY[row][col];
+    }
+
+    int next_row = row - 1;
+
+    NEXT_STEP_MEMORY[row][col] = get_cheapest_next_col(col, next_row);
+
+    PATH_ENERGY_MEMORY[row][col] = PIXELS_ENERGY[row][col] + calculate_path_energy_up(NEXT_STEP_MEMORY[row][col], next_row);
+
+    return PATH_ENERGY_MEMORY[row][col];
+}
+
+int
+calculate_path_energy_down(int col, int row) {
 
     int next_row = row + 1;
 
@@ -122,11 +139,17 @@ calculate_path_energy(int col, int row) {
         return PATH_ENERGY_MEMORY[row][col];
     }
 
-    NEXT_STEP_MEMORY[row][col] = get_cheapest_next_col(col, row);
+    NEXT_STEP_MEMORY[row][col] = get_cheapest_next_col(col, next_row);
 
-    PATH_ENERGY_MEMORY[row][col] = PIXELS_ENERGY[row][col] + calculate_path_energy(NEXT_STEP_MEMORY[row][col], next_row);
+    PATH_ENERGY_MEMORY[row][col] = PIXELS_ENERGY[row][col] + calculate_path_energy_down(NEXT_STEP_MEMORY[row][col], next_row);
 
     return PATH_ENERGY_MEMORY[row][col];
+}
+
+int
+calculate_path_energy(int col, int row) {
+
+    return calculate_path_energy_up(col, row - 1) + calculate_path_energy_down(col, row);
 }
 
 void remove_2d_element(vector<vector<int>> &list, int col, int row) {
@@ -173,10 +196,15 @@ void clean_carved_path() {
     }
 }
 
-void eliminate_path(int cheapest_col) {
+void eliminate_path(int cheapest_col, int cheapest_base_height) {
 
-    for (int row = 0; row < HEIGHT; row++) {
+    int cheapest_col_up = NEXT_STEP_MEMORY[cheapest_base_height][cheapest_col];
+    for (int row = cheapest_base_height; row < HEIGHT; row++) {
         remove_pixel(cheapest_col, row);
+    }
+
+    for (int row = cheapest_base_height - 1; row >= 0; row--) {
+        remove_pixel(cheapest_col_up, row);
     }
 
     WIDTH--;
@@ -199,32 +227,53 @@ void carve_image_width(const int search_depth) {
 
     int next_width = calculate_next_width();
 
-    int path_energy, cheapest_col, cheapest_path_energy;
+    int path_energy, cheapest_col, cheapest_path_energy, cheapest_base_height;
 
     CARVED_PATH = vector<int>(HEIGHT);
 
+    int temp_search_depth, base_height, start_col;
+    int search_height_chunks = HEIGHT / (search_depth + 1);
+    bool first_search;
+
     while (WIDTH > next_width) {
+        first_search = true;
 
-        PATH_ENERGY_MEMORY = vector<vector<int>>(
-                HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
-        );
+        temp_search_depth = search_depth;
 
-        NEXT_STEP_MEMORY = vector<vector<int>>(
-                HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
-        );
+        while (temp_search_depth > 0) {
+            base_height = search_height_chunks * temp_search_depth;
 
-        cheapest_col = 0, cheapest_path_energy = calculate_path_energy(0, 0);
+            PATH_ENERGY_MEMORY = vector<vector<int>>(
+                    HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
+            );
 
-        for (int col = 1; col < WIDTH; col++) {
-            path_energy = calculate_path_energy(col, 0);
+            NEXT_STEP_MEMORY = vector<vector<int>>(
+                    HEIGHT, vector<int>(WIDTH, NULL_INT_VALUE)
+            );
 
-            if (path_energy < cheapest_path_energy) {
-                cheapest_path_energy = path_energy;
-                cheapest_col = col;
+            start_col = 0;
+            if (first_search) {
+                cheapest_col = 0,
+                cheapest_base_height = base_height,
+                cheapest_path_energy = calculate_path_energy(0, base_height);
+                start_col = 1;
+                first_search = false;
             }
+
+            for (int col = start_col; col < WIDTH; col++) {
+                path_energy = calculate_path_energy(col, base_height);
+
+                if (path_energy < cheapest_path_energy) {
+                    cheapest_path_energy = path_energy;
+                    cheapest_col = col;
+                    cheapest_base_height = base_height;
+                }
+            }
+
+            temp_search_depth--;
         }
 
-        eliminate_path(cheapest_col);
+        eliminate_path(cheapest_col, cheapest_base_height);
     }
 }
 
@@ -312,18 +361,18 @@ int main()
     WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
     seam_carve(0, JPG_EXTENSION);
-//    seam_carve(1, JPG_EXTENSION);
-//    seam_carve(2, JPG_EXTENSION);
-//    seam_carve(3, JPG_EXTENSION);
-//    seam_carve(4, JPG_EXTENSION);
-//    seam_carve(5, JPG_EXTENSION);
-//    seam_carve(6, JPG_EXTENSION);
-//    seam_carve(7, JPG_EXTENSION);
-//    seam_carve(8, JPG_EXTENSION);
-//    seam_carve(9, JPG_EXTENSION);
-//    seam_carve(10, JPG_EXTENSION);
-//    seam_carve(11, JPG_EXTENSION);
-//    seam_carve(12, JPG_EXTENSION);
+    seam_carve(1, JPG_EXTENSION);
+    seam_carve(2, JPG_EXTENSION);
+    seam_carve(3, JPG_EXTENSION);
+    seam_carve(4, JPG_EXTENSION);
+    seam_carve(5, JPG_EXTENSION);
+    seam_carve(6, JPG_EXTENSION);
+    seam_carve(7, JPG_EXTENSION);
+    seam_carve(8, JPG_EXTENSION);
+    seam_carve(9, JPG_EXTENSION);
+    seam_carve(10, JPG_EXTENSION);
+    seam_carve(11, JPG_EXTENSION);
+    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
