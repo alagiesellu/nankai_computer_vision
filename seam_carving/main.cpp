@@ -16,8 +16,8 @@ using namespace std;
 #define COLOR_PROPERTY 3
 #define NULL_INT_VALUE (-1)
 
-#define WIDTH_TYPE "WIDTH"
-#define HEIGHT_TYPE "HEIGHT"
+//#define WIDTH_TYPE "WIDTH"
+//#define HEIGHT_TYPE "HEIGHT"
 
 #define JPG_EXTENSION "jpg"
 
@@ -195,7 +195,7 @@ int calculate_next_width() {
     return static_cast<int>(WIDTH - (WIDTH * (WIDTH_PERCENTAGE_TO_REDUCE / 100)));
 }
 
-void carve_image_width() {
+void carve_image_width(const int search_depth) {
 
     int next_width = calculate_next_width();
 
@@ -226,10 +226,6 @@ void carve_image_width() {
 
         eliminate_path(cheapest_col);
     }
-}
-
-void carve_image_height() {
-    // to-do
 }
 
 void load_pixels_from_3d_to_1d() {
@@ -293,7 +289,7 @@ void load_pixels_from_1d_to_3d() {
     }
 }
 
-void seam_carve(const int i, const string& image_extension, const string& carving_direction = WIDTH_TYPE)
+void seam_carve(const int i, const string& image_extension, const int search_depth = 1)
 {
     cout << i << " => ";
     load_image(generate_filename(i, image_extension), WIDTH, HEIGHT, COLOR_PROPERTY);
@@ -305,11 +301,7 @@ void seam_carve(const int i, const string& image_extension, const string& carvin
     load_pixels_from_2d_to_1d();
     write_image(generate_filename(i, image_extension, "energy").data(), WIDTH, HEIGHT, 1);
 
-    if (carving_direction == WIDTH_TYPE)
-        carve_image_width();
-
-    if (carving_direction == HEIGHT_TYPE)
-        carve_image_height();
+    carve_image_width(search_depth);
 
     load_pixels_from_3d_to_1d();
     write_image(generate_filename(i, image_extension, "carved").data(), WIDTH, HEIGHT, COLOR_PROPERTY);
@@ -320,18 +312,18 @@ int main()
     WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
     seam_carve(0, JPG_EXTENSION);
-    seam_carve(1, JPG_EXTENSION);
-    seam_carve(2, JPG_EXTENSION);
-    seam_carve(3, JPG_EXTENSION);
-    seam_carve(4, JPG_EXTENSION);
-    seam_carve(5, JPG_EXTENSION);
-    seam_carve(6, JPG_EXTENSION);
-    seam_carve(7, JPG_EXTENSION);
-    seam_carve(8, JPG_EXTENSION);
-    seam_carve(9, JPG_EXTENSION);
-    seam_carve(10, JPG_EXTENSION);
-    seam_carve(11, JPG_EXTENSION);
-    seam_carve(12, JPG_EXTENSION);
+//    seam_carve(1, JPG_EXTENSION);
+//    seam_carve(2, JPG_EXTENSION);
+//    seam_carve(3, JPG_EXTENSION);
+//    seam_carve(4, JPG_EXTENSION);
+//    seam_carve(5, JPG_EXTENSION);
+//    seam_carve(6, JPG_EXTENSION);
+//    seam_carve(7, JPG_EXTENSION);
+//    seam_carve(8, JPG_EXTENSION);
+//    seam_carve(9, JPG_EXTENSION);
+//    seam_carve(10, JPG_EXTENSION);
+//    seam_carve(11, JPG_EXTENSION);
+//    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
