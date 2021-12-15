@@ -81,13 +81,17 @@ int calculate_energy(int col, int row) {
     return energy;
 }
 
-string generate_filename(const int i, const string& extension, const string& destination = "")
+string
+generate_filename(const int i, const string &extension, const string &destination = "", const int &search_depth = -1)
 {
 
     string name = to_string(i);
 
     if (! destination.empty())
         name = destination + "/" + name;
+
+    if (search_depth != -1)
+        name = name + "n" + to_string(search_depth);
 
     return IMAGES_DIRECTORY_PATH + name + "." + extension;
 }
@@ -109,7 +113,7 @@ int get_cheapest_next_col(int col, int next_row) {
 }
 
 int
-calculate_path_energy_up(int col, int row, const int search_depth) {
+calculate_path_energy_up(int col, int row, const int &search_depth) {
 
     if (row == 0)
         return PIXELS_ENERGY[row][col];
@@ -128,7 +132,7 @@ calculate_path_energy_up(int col, int row, const int search_depth) {
 }
 
 int
-calculate_path_energy_down(int col, int row, const int search_depth) {
+calculate_path_energy_down(int col, int row, const int &search_depth) {
 
     int next_row = row + 1;
 
@@ -147,7 +151,7 @@ calculate_path_energy_down(int col, int row, const int search_depth) {
 }
 
 int
-calculate_path_energy(int col, int row, const int search_depth) {
+calculate_path_energy(int col, int row, const int &search_depth) {
 
     return calculate_path_energy_up(col, row - 1, search_depth) + calculate_path_energy_down(col, row, search_depth);
 }
@@ -160,7 +164,7 @@ void remove_3d_element(vector<vector<vector<int>>> &list, int col, int row) {
     list[row].erase(list[row].begin() + col);
 }
 
-void remove_pixel(int &cheapest_col, int row, const int search_depth) {
+void remove_pixel(int &cheapest_col, int row, const int &search_depth) {
 
     int remove_col = static_cast<int>(cheapest_col);
 
@@ -196,7 +200,7 @@ void clean_carved_path() {
     }
 }
 
-void eliminate_path(int cheapest_col, int cheapest_base_height, const int search_depth) {
+void eliminate_path(int cheapest_col, int cheapest_base_height, const int &search_depth) {
 
     int cheapest_col_up = NEXT_STEP_MEMORY[cheapest_base_height][cheapest_col][search_depth];
     for (int row = cheapest_base_height; row < HEIGHT; row++) {
@@ -355,18 +359,22 @@ void seam_carve(const int i, const string& image_extension, const int search_dep
     carve_image_width(search_depth);
 
     load_pixels_from_3d_to_1d();
-    write_image(generate_filename(i, image_extension, "carved").data(), WIDTH, HEIGHT, COLOR_PROPERTY);
+    write_image(generate_filename(i, image_extension, "carved", search_depth).data(), WIDTH, HEIGHT, COLOR_PROPERTY);
 }
 
 int main()
 {
     WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
-    seam_carve(0, JPG_EXTENSION, 2);
-    seam_carve(1, JPG_EXTENSION, 2);
-    seam_carve(2, JPG_EXTENSION, 2);
-    seam_carve(3, JPG_EXTENSION, 2);
-    seam_carve(4, JPG_EXTENSION, 2);
+    int search_depth = 1;
+    while (search_depth <= 55) {
+        seam_carve(0, JPG_EXTENSION, search_depth);
+        search_depth += 10;
+    }
+//    seam_carve(1, JPG_EXTENSION, 10);
+//    seam_carve(2, JPG_EXTENSION, 10);
+//    seam_carve(3, JPG_EXTENSION, 10);
+//    seam_carve(4, JPG_EXTENSION, 10);
 //    seam_carve(5, JPG_EXTENSION);
 //    seam_carve(6, JPG_EXTENSION);
 //    seam_carve(7, JPG_EXTENSION);
