@@ -366,23 +366,15 @@ int main()
 {
     WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
-    int search_depth = 1;
-    while (search_depth <= 55) {
-        seam_carve(0, JPG_EXTENSION, search_depth);
-        search_depth += 10;
+    for (int i = 0; i <= 12; ++i) {
+
+        int search_depth = 1;
+        while (search_depth <= 55) {
+            seam_carve(0, JPG_EXTENSION, search_depth);
+            search_depth += 10;
+        }
+
     }
-//    seam_carve(1, JPG_EXTENSION, 10);
-//    seam_carve(2, JPG_EXTENSION, 10);
-//    seam_carve(3, JPG_EXTENSION, 10);
-//    seam_carve(4, JPG_EXTENSION, 10);
-//    seam_carve(5, JPG_EXTENSION);
-//    seam_carve(6, JPG_EXTENSION);
-//    seam_carve(7, JPG_EXTENSION);
-//    seam_carve(8, JPG_EXTENSION);
-//    seam_carve(9, JPG_EXTENSION);
-//    seam_carve(10, JPG_EXTENSION);
-//    seam_carve(11, JPG_EXTENSION);
-//    seam_carve(12, JPG_EXTENSION);
 
     return 0;
 }
