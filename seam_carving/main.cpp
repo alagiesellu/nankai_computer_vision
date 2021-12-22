@@ -366,11 +366,11 @@ int main()
 {
     WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
-    for (int i = 0; i <= 12; ++i) {
+    for (int i = 17; i <= 17; ++i) {
 
         int search_depth = 1;
         while (search_depth <= 55) {
-            seam_carve(0, JPG_EXTENSION, search_depth);
+            seam_carve(i, JPG_EXTENSION, search_depth);
             search_depth += 10;
         }
 
