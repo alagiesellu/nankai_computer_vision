@@ -366,7 +366,7 @@ int main()
 {
     WIDTH_PERCENTAGE_TO_REDUCE = 25;
 
-    for (int i = 17; i <= 17; ++i) {
+    for (int i = 0; i <= 5; ++i) {
 
         int search_depth = 1;
         while (search_depth <= 55) {
